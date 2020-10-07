@@ -1,0 +1,42 @@
+Sub Auto()
+    Dim obj As Object
+    Dim xlsheet As Worksheet
+    Dim table As QueryTable
+    Dim txtfilesOpen As Variant, txtfile As Variant
+
+    Application.ScreenUpdating = False 'to make process faster!
+    Set obj = CreateObject("Scripting.FileSystemObject")
+
+    txtfilesOpen = Application.GetOpenFilename _
+                 (FileFilter:="Text Files (*.csv), *.csv", _
+                  MultiSelect:=True, Title:="Text Files to Open")
+
+    For Each txtfile In txtfilesOpen 'looping/importing CSVs to same name sheets in workbook
+        For Each xlsheet In ThisWorkbook.Worksheets
+            If xlsheet.Name = Replace(obj.GetFileName(txtfile), ".csv", "") Then
+                xlsheet.Activate
+                GoTo ImportCSV
+            End If
+        Next xlsheet
+
+
+ImportCSV:
+    ActiveCell.Offset(1, 0).Range("A1").Select  'always picking the A1 cell!
+
+        With ActiveSheet.QueryTables.Add(Connection:="TEXT;" & txtfile, _
+          Destination:=ActiveSheet.Cells(1, 1))
+            .TextFileParseType = xlDelimited
+            .TextFileCommaDelimiter = True
+            .Refresh
+
+            .Refresh BackgroundQuery:=False
+        End With
+
+    Next txtfile
+
+    Application.ScreenUpdating = True
+
+    Set fso = Nothing
+    
+End Sub
+
